@@ -1,0 +1,54 @@
+name: project
+recipe: drupal8
+config:
+  webroot: web
+  # ==========================
+  # Enable XDebug
+  # @see https://docs.devwithlando.io/tutorials/lando-with-vscode.html 
+  # ==========================
+  # xdebug: true
+  # conf: 
+  #   php: .vscode/php.ini
+services:
+  node:
+    type: node:6.10
+    build:
+      - echo 'Bravo! You NodeJS container is up and running!'
+tooling:
+  npm:
+    service: node
+# ==========================
+# Custom domains
+# ==========================
+#proxy:
+#  appserver:
+#    - "yoursite.lndo.site"
+#    - "*.yousite.lndo.site"
+events:
+  post-start:
+    - echo "=========================="
+    - echo "Install"
+    - echo "=========================="
+    - appserver: "cd $LANDO_MOUNT/ && composer install"
+    # ==========================
+    # Remove these lines once Drupal is installed
+    - echo ""
+    - echo "=========================="
+    - echo "First install from config"
+    - echo "=========================="
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush site-install config_installer -y"
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush upwd admin admin"
+    # ==========================
+    - echo "=========================="
+    - echo "Update database..."
+    - echo "=========================="
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush cim -r web"
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush entup -r web"
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush updb -r web"
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush locale-update -r web"
+    - appserver: "cd $LANDO_MOUNT/ && ./bin/drush cr -r web"
+    - echo "=========================="
+    - echo "Building theme assets..."
+    - echo "=========================="
+    - node: "cd $LANDO_MOUNT && npm install"
+    - node: "cd $LANDO_MOUNT && npm run start"

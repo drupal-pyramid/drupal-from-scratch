@@ -3,11 +3,16 @@
 ## Tools
 
 You need to install:
-* Composer
-* Lando
-* NPM
+* [Lando](https://docs.devwithlando.io/installation/installing.html)
+* [Composer](https://getcomposer.org/doc/00-intro.md) (see [Quick way to get composer locally](#quick-install-composer))
+
+* [NPM](https://www.npmjs.com/)
+
 
 ## Kickstart your project
+
+**Note**:
+We assume *project* is an empty folder.  
 
 Get a Drupal 8 codebase:
 
@@ -18,7 +23,12 @@ composer create-project drupal-composer/drupal-project:8.x-dev project --stabili
 Init your local:
 
 ```bash
-lando init --recipe drupal8 --webroot web --name demo
+# Init a new lando env
+cd project && lando init --recipe drupal8 --webroot web --name project
+# OR use the minimal version
+cp example.lando.min.yml project/.lando.yml
+# OR better, use our enhanced version :)
+cp example.lando.yml project/.lando.yml
 ```
 
 Add required files:
@@ -29,19 +39,16 @@ cp example.settings.php project/web/sites/default/settings.php
 cp project/.env.example project/.env
 ```
 
-Edit `.env` file with Lando database credentials:
-
-```bash
-MYSQL_DATABASE=drupal8
-MYSQL_PASSWORD=drupal8
-MYSQL_HOSTNAME=database
-MYSQL_PORT=3306
-MYSQL_USER=drupal8
-```
-
 Edit `composer.json`:
 
 ```json
+...
+  "require:" {
+    "oomphinc/composer-installers-extender": "^1.1",    
+    "drupal/config_ignore": "^2.1",
+    "drupal/config_split": "^1.3",
+    "drupal/config_installer": "^1.8"
+  }
 ...
   "config": {
     "bin-dir": "bin/",
@@ -49,6 +56,44 @@ Edit `composer.json`:
     "preferred-install": "dist",
     "discard-changes": true
   },
+...
+  "extra" : {
+    "installer-paths": {
+      "web/core": [
+        "type:drupal-core"
+      ],
+      "web/libraries/{$name}": [
+        "type:drupal-library"
+      ],
+      "web/modules/contrib/{$name}": [
+        "type:drupal-module"
+      ],
+      "web/profiles/contrib/{$name}": [
+        "type:drupal-profile"
+      ],
+      "web/themes/contrib/{$name}": [
+        "type:drupal-theme"
+      ],
+      "web/themes/custom/{$name}": [
+        "type:drupal-theme-custom"
+      ],
+      "drush/contrib/{$name}": [
+        "type:drupal-drush"
+      ]
+    },
+    "drupal-scaffold": {
+      "source": "https://cgit.drupalcode.org/drupal/plain/{path}?h={version}",
+      "excludes": [
+        "sites/example.settings.local.php",
+        "sites/example.settings.php"
+      ],
+      "initial": {
+        "sites/default/example.services.development.yml": "sites/default/services.development.yml",
+        "sites/default/example.settings.local.php": "sites/default/settings.local.php",
+        "sites/default/example.settings.php": "sites/default/settings.php"
+      }
+    }
+  }
 ...
 ```
 
@@ -161,9 +206,17 @@ lando composer code-review # -> Fix coding standards issues and commit your fixe
 
 ---
 
+<a name="quick-install-composer)">Quickly install Composer</a>
+```bash
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+export PATH="$HOME/.composer/vendor/bin:$PATH"
+source ~/.bash_profile
+```
+
+---
+
 Interesting read:
 * [*The WHY and the HOW `one file per component` in Drupal 8 much better than I do*](https://www.previousnext.com.au/blog/performance-improvements-drupal-8-libraries)
-
 * [File organization in Drupal 8](https://www.drupal.org/docs/develop/standards/css/css-file-organization-for-drupal-8#aggregate)
-
 * [WHY we must render the `content` variable in Twig and try to avoid using fields...](https://www.previousnext.com.au/blog/ensuring-drupal-8-block-cache-tags-bubble-up-page)
